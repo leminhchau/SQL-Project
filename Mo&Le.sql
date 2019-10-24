@@ -364,3 +364,57 @@ INSERT ALL
     INTO ORDERLINE (OrderID, ProductID, OrderedQuantity, SalePrice) VALUES (1010, 8, 10, '')
 SELECT 1 FROM DUAL;
     
+
+									    /*List product name, finish and standard price for all desks and all tables that cost more than $300 in the Product table*/
+SELECT P.ProductName, P.ProductFinish, P.ProductStandardPrice
+FROM Product P
+WHERE P.ProductStandardPrice > 300 AND (P.ProductName LIKE '%Table%' OR P.ProductName LIKE '%Desk%');
+
+
+/*List customer, city, and state for all customers in the Customer table whose address is Florida, Texas, California, or Hawaii. 
+List the customers alphabetically by state and alphabetically by customer within each state*/
+SELECT X.CustomerName, X.CustomerCity, X.CustomerState
+FROM 
+  (SELECT C.CustomerName, C.CustomerCity, C.CustomerState
+  FROM Customer C
+  WHERE C.CustomerState IN ('FL','TX','CA','HI')
+  ORDER BY C.CustomerName) X
+ORDER BY X.CustomerState;
+
+
+/*Count the number of customers with addresses in each state to which we ship*/
+SELECT C.CustomerState, COUNT(C.CustomerID) AS NumberOfCustomer
+FROM Customer C
+GROUP BY C.CustomerState;
+
+
+/*Count the number of customers with addresses in each city to which we ship. List the cities by state*/
+SELECT X.NumberOfCustomer, X.CustomerCity, C.CustomerState
+FROM Customer C, 
+  (SELECT C.CustomerCity, COUNT(C.CustomerID) AS NumberOfCustomer
+  FROM Customer C
+  GROUP BY C.CustomerCity) X
+WHERE C.CustomerCity = X.CustomerCity
+ORDER BY C.CustomerState;
+
+
+/*List in alphabetical order the product finish and the average standard price for each finish for selected finishes having an average standard price less than 750*/
+SELECT X.ProductFinish, X.AveragePriceForEachFinish
+FROM 
+  (SELECT P.ProductFinish, AVG(P.ProductStandardPrice) AS AveragePriceForEachFinish
+  FROM Product P
+  GROUP BY P.ProductFinish) X
+WHERE X.AveragePriceForEachFinish < 750
+ORDER BY X.ProductFinish;
+
+
+/* What is the total value of orders placed for each furniture product*/
+SELECT Final.ProductID, Final.ProductName, Final.TotalPrice
+FROM 
+  (SELECT P.ProductID AS ProductID, P.ProductName AS ProductName, (P.ProductStandardPrice * E.TotalCount) AS TotalPrice
+  FROM Product P, (
+      SELECT O.ProductID AS ProductID, SUM(O.OrderedQuantity) AS TotalCount
+      FROM OrderLine O
+      GROUP BY O.ProductID) Z
+  WHERE P.ProductID = Z.ProductID    
+  ) Final;
